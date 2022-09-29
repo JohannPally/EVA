@@ -25,8 +25,8 @@ with mp_pose.Pose(
     while cap.isOpened() and (time.time() < timeout):
         success, image = cap.read()
         if not success:
-            # print("Ignoring empty camera frame.")
-            # If loading a video, use 'break' instead of 'continue'.
+            # If loading a video, use 'break'
+            # If streaming from cam instead use 'continue'.
             break
 
         # To improve performance, optionally mark the image as not writeable to
@@ -55,17 +55,16 @@ with mp_pose.Pose(
         #   break
 
 cap.release()
-cv2.destroyAllWindows()
-
-
-# 0 tuple, 1 set of points, 0 is a point,
-# val = accum_results[0][1][0].x
+#cv2.destroyAllWindows()
 
 def get_image_at_i(i):
     return accum_images[i]
 
+
 def get_landmarks_at_i(i):
-    pse = accum_results[i][1]
+    # 0 tuple, 1 set of points, 0 is a point,
+    # val = accum_results[0][1][0].x
+    pse = get_key_points(i)
     x_out = []
     y_out = []
     z_out = []
@@ -74,36 +73,49 @@ def get_landmarks_at_i(i):
         y_out.append(pnt.y)
         z_out.append(pnt.z)
 
-    return x_out, y_out, z_out
+    return z_out, x_out, y_out
+
+def get_key_points(i):
+    out = []
+    pse = accum_results[i][1]
+    out.append(pse[mp_pose.PoseLandmark.LEFT_WRIST])
+    out.append(pse[mp_pose.PoseLandmark.LEFT_ELBOW])
+    out.append(pse[mp_pose.PoseLandmark.LEFT_SHOULDER])
+    out.append(pse[mp_pose.PoseLandmark.RIGHT_SHOULDER])
+    out.append(pse[mp_pose.PoseLandmark.RIGHT_ELBOW])
+    out.append(pse[mp_pose.PoseLandmark.RIGHT_WRIST])
+    return out
 
 
 def reset_axis_bounds(ax):
-    ax.set_ylim3d(-1,1)
-    ax.set_xlim3d(0,1)
-    ax.set_zlim3d(-1,1)
+    ax.set_ylim3d(0, 1)
+    ax.set_xlim3d(-.5, 1)
+    ax.set_zlim3d(0, 1)
     ax.set_ylabel("y")
     ax.set_xlabel("x")
     ax.set_zlabel("z")
 
 fig = plt.figure()
+# TODO need to separate plts, consider GridSpec
 ax = fig.add_subplot(111, projection='3d')
-im = fig.add_subplot(111)
+# im = fig.add_subplot(111)
 reset_axis_bounds(ax)
 
 n = len(accum_results)
 axslide = plt.axes([0.25, 0.15, 0.65, 0.03])
-slide = Slider(axslide, 'Time', 0, n-1, n/2)
-
+slide = Slider(axslide, 'Time', 0, n - 1, n / 2)
 
 
 def update(val):
     ax.clear()
-    im.clear()
+    # im.clear()
     reset_axis_bounds(ax)
     sl_val = int(slide.val)
     x_new, y_new, z_new = get_landmarks_at_i(sl_val)
-    ax.scatter(x_new, y_new, z_new)
-    im.imshow(get_image_at_i(sl_val))
+    ax.plot(x_new, y_new, z_new)
+    ax.scatter(x_new, y_new, z_new, edgecolors = ["k", "c", "m", "m", "c", "k"])
+    # im.imshow(get_image_at_i(sl_val))
+
 
 slide.on_changed(update)
 plt.show()
