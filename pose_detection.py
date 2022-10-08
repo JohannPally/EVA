@@ -6,6 +6,7 @@ import mediapipe.python.solutions.drawing_utils
 from matplotlib.axis import Axis
 from matplotlib.widgets import Slider
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -55,8 +56,11 @@ with mp_pose.Pose(
         #   break
 
 cap.release()
-#cv2.destroyAllWindows()
 
+# cv2.destroyAllWindows()
+
+"""
+=============================PLOTTING 3D==============================
 def get_image_at_i(i):
     return accum_images[i]
 
@@ -74,6 +78,7 @@ def get_landmarks_at_i(i):
         z_out.append(pnt.z)
 
     return z_out, x_out, y_out
+
 
 def get_key_points(i):
     out = []
@@ -94,6 +99,7 @@ def reset_axis_bounds(ax):
     ax.set_ylabel("y")
     ax.set_xlabel("x")
     ax.set_zlabel("z")
+
 
 fig = plt.figure()
 # TODO need to separate plts, consider GridSpec
@@ -119,13 +125,123 @@ def update(val):
 
 slide.on_changed(update)
 plt.show()
+"""
 
-# dump_json = json.dumps(accum_results, indent = 4)
-# with open("test_data.csv", "w") as outfile:
-#     writer = csv.writer(outfile)
-#     for i in range(len(times)):
-#         out = []
-#         out.append(str(times[i]))
-#         for lm in accum_results[i]:
-#             out.append(str(lm))
-#         writer.writerow(out)
+"""
+==================================PLOTTING 2D==================================
+def get_times():
+    out = []
+    for pair in accum_results:
+        out.append(pair[0])
+    return out
+
+
+def get_xs():
+    out = [[], [], [], [], [], []]
+    for i in range(len(accum_results)):
+        pse = accum_results[i][1]
+        out[0].append(pse[mp_pose.PoseLandmark.LEFT_WRIST].x)
+        out[1].append(pse[mp_pose.PoseLandmark.LEFT_ELBOW].x)
+        out[2].append(pse[mp_pose.PoseLandmark.LEFT_SHOULDER].x)
+        out[3].append(pse[mp_pose.PoseLandmark.RIGHT_SHOULDER].x)
+        out[4].append(pse[mp_pose.PoseLandmark.RIGHT_ELBOW].x)
+        out[5].append(pse[mp_pose.PoseLandmark.RIGHT_WRIST].x)
+    return out
+
+
+def get_ys():
+    out = [[], [], [], [], [], []]
+    for i in range(len(accum_results)):
+        pse = accum_results[i][1]
+        out[0].append(pse[mp_pose.PoseLandmark.LEFT_WRIST].y)
+        out[1].append(pse[mp_pose.PoseLandmark.LEFT_ELBOW].y)
+        out[2].append(pse[mp_pose.PoseLandmark.LEFT_SHOULDER].y)
+        out[3].append(pse[mp_pose.PoseLandmark.RIGHT_SHOULDER].y)
+        out[4].append(pse[mp_pose.PoseLandmark.RIGHT_ELBOW].y)
+        out[5].append(pse[mp_pose.PoseLandmark.RIGHT_WRIST].y)
+    return out
+
+
+def get_zs():
+    out = [[], [], [], [], [], []]
+    for i in range(len(accum_results)):
+        pse = accum_results[i][1]
+        out[0].append(pse[mp_pose.PoseLandmark.LEFT_WRIST].z)
+        out[1].append(pse[mp_pose.PoseLandmark.LEFT_ELBOW].z)
+        out[2].append(pse[mp_pose.PoseLandmark.LEFT_SHOULDER].z)
+        out[3].append(pse[mp_pose.PoseLandmark.RIGHT_SHOULDER].z)
+        out[4].append(pse[mp_pose.PoseLandmark.RIGHT_ELBOW].z)
+        out[5].append(pse[mp_pose.PoseLandmark.RIGHT_WRIST].z)
+    return out
+
+
+def plt_mult(tms, st):
+    for s in st:
+        plt.plot(tms, s)
+
+
+fig = plt.figure()
+plt_mult(get_times(), get_ys())
+plt.show()
+
+fig = plt.figure()
+plt_mult(get_times(), get_xs())
+plt.show()
+
+fig = plt.figure()
+plt_mult(get_times(), get_zs())
+plt.show()
+"""
+
+
+def get_times():
+    out = []
+    for pair in accum_results:
+        out.append(pair[0])
+    return out
+
+
+def get_left_arm_angle(i):
+    pse = accum_results[i][1]
+    wri = pse[mp_pose.PoseLandmark.LEFT_WRIST]
+    wri_pt = np.array([wri.x, wri.y, wri.z])
+    elb = pse[mp_pose.PoseLandmark.LEFT_ELBOW]
+    elb_pt = np.array([elb.x, elb.y, elb.z])
+    sho = pse[mp_pose.PoseLandmark.LEFT_SHOULDER]
+    sho_pt = np.array([sho.x, sho.y, elb.z])
+
+    forearm_vec = wri_pt - elb_pt
+    upperarm_vec = sho_pt - elb_pt
+
+    num = np.dot(forearm_vec, upperarm_vec)
+    den = (np.linalg.norm(forearm_vec) * np.linalg.norm(upperarm_vec))
+    cos_theta = num / den
+    return np.degrees(np.arccos(cos_theta))
+
+
+def get_left_angles():
+    out = []
+    for i in range(len(accum_results)):
+        out.append(get_left_arm_angle(i))
+    return out
+
+
+angs = get_left_angles()
+tms = get_times()
+
+fig = plt.figure()
+plt.plot(tms, angs)
+plt.show()
+
+"""
+===============================DUMPING TO JSON===============================
+dump_json = json.dumps(accum_results, indent = 4)
+with open("test_data.csv", "w") as outfile:
+    writer = csv.writer(outfile)
+    for i in range(len(times)):
+        out = []
+        out.append(str(times[i]))
+        for lm in accum_results[i]:
+            out.append(str(lm))
+        writer.writerow(out)
+"""
