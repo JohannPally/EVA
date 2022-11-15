@@ -17,7 +17,7 @@ accum_images = []
 times = []
 
 # cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('far.MOV')
+cap = cv2.VideoCapture('y_s2.MOV')
 
 with mp_pose.Pose(
         min_detection_confidence=0.5,
@@ -572,8 +572,8 @@ def activity_segment(xs, ys, n):
     down = []
     up = []
     d_s, d_e, u_s, u_e = -1, -1, -1, -1
-    d_threshold = .6
-    u_threshold = .1
+    d_threshold = .5
+    u_threshold = .2
 
     for j in range(len(moving)-1):
         sitting = (moving[j][1], moving[j+1][0])
