@@ -1,0 +1,12 @@
+iks01a3_env_sensors.c:118:9:IKS01A3_ENV_SENSOR_Init	48	static
+iks01a3_env_sensors.c:383:9:IKS01A3_ENV_SENSOR_DeInit	24	static
+iks01a3_env_sensors.c:409:9:IKS01A3_ENV_SENSOR_GetCapabilities	24	static
+iks01a3_env_sensors.c:435:9:IKS01A3_ENV_SENSOR_ReadID	24	static
+iks01a3_env_sensors.c:463:9:IKS01A3_ENV_SENSOR_Enable	24	static
+iks01a3_env_sensors.c:501:9:IKS01A3_ENV_SENSOR_Disable	24	static
+iks01a3_env_sensors.c:540:9:IKS01A3_ENV_SENSOR_GetOutputDataRate	32	static
+iks01a3_env_sensors.c:579:9:IKS01A3_ENV_SENSOR_SetOutputDataRate	32	static
+iks01a3_env_sensors.c:618:9:IKS01A3_ENV_SENSOR_GetValue	32	static
+iks01a3_env_sensors.c:663:16:HTS221_0_Probe	72	static
+iks01a3_env_sensors.c:748:16:LPS22HH_0_Probe	72	static
+iks01a3_env_sensors.c:833:16:STTS751_0_Probe	72	static

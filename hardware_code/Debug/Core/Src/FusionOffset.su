@@ -1,0 +1,5 @@
+../Core/Inc/FusionMath.h:201:28:FusionVectorAdd	72	static
+../Core/Inc/FusionMath.h:215:28:FusionVectorSubtract	72	static
+../Core/Inc/FusionMath.h:238:28:FusionVectorMultiplyScalar	64	static
+../Core/Src/FusionOffset.c:40:6:FusionOffsetInitialise	32	static
+../Core/Src/FusionOffset.c:54:14:FusionOffsetUpdate	72	static

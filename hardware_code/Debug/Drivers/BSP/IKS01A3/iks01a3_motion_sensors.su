@@ -1,0 +1,16 @@
+iks01a3_motion_sensors.c:182:9:IKS01A3_MOTION_SENSOR_Init	64	static
+iks01a3_motion_sensors.c:847:9:IKS01A3_MOTION_SENSOR_DeInit	24	static
+iks01a3_motion_sensors.c:873:9:IKS01A3_MOTION_SENSOR_GetCapabilities	24	static
+iks01a3_motion_sensors.c:899:9:IKS01A3_MOTION_SENSOR_ReadID	24	static
+iks01a3_motion_sensors.c:928:9:IKS01A3_MOTION_SENSOR_Enable	24	static
+iks01a3_motion_sensors.c:967:9:IKS01A3_MOTION_SENSOR_Disable	24	static
+iks01a3_motion_sensors.c:1007:9:IKS01A3_MOTION_SENSOR_GetAxes	32	static
+iks01a3_motion_sensors.c:1047:9:IKS01A3_MOTION_SENSOR_GetAxesRaw	32	static
+iks01a3_motion_sensors.c:1087:9:IKS01A3_MOTION_SENSOR_GetSensitivity	32	static
+iks01a3_motion_sensors.c:1128:9:IKS01A3_MOTION_SENSOR_GetOutputDataRate	32	static
+iks01a3_motion_sensors.c:1168:9:IKS01A3_MOTION_SENSOR_GetFullScale	32	static
+iks01a3_motion_sensors.c:1209:9:IKS01A3_MOTION_SENSOR_SetOutputDataRate	32	static
+iks01a3_motion_sensors.c:1249:9:IKS01A3_MOTION_SENSOR_SetFullScale	32	static
+iks01a3_motion_sensors.c:1293:16:LSM6DSO_0_Probe	80	static
+iks01a3_motion_sensors.c:1375:16:LIS2DW12_0_Probe	80	static
+iks01a3_motion_sensors.c:1448:16:LIS2MDL_0_Probe	80	static
