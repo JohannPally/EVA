@@ -5,6 +5,8 @@ import io
 import struct
 import random
 import time
+import cv2
+import os
 from PIL import ImageFile
 from PIL import ImageTk as itk
 from tkinter import *
@@ -38,6 +40,7 @@ def main():
     HOST = "172.20.10.2" # IP address of your Raspberry PI
     PORT = 6650          # Port to listen on (non-privileged ports are > 1023)
     img_count = 0
+    unique_img_count = 0
     ImageFile.LOAD_TRUNCATED_IMAGES = True
     prev_prompt_time = time.time()
     ws = Tk()
@@ -62,6 +65,7 @@ def main():
         print("After Accept")
         prev = time.time()
         prev_show = time.time()
+	  prev_img_file_size = 0
         while True:
             try:
                 # start_time = time.time() # start time of the loop
@@ -73,22 +77,27 @@ def main():
 
                 #print("server recv from: ", clientInfo)
                 time_before_img = time.time()
-                (img, client_res, clientInfo_res) = getImage(client, clientInfo, s)
+                (img_file_size, img, img_itk, client_res, clientInfo_res) = getImage(client, clientInfo, s)
 
                 print("time diff image: " + str(time.time() - time_before_img))
 
                 client = client_res
                 clientInfo = clientInfo_res
-                if img is None:
+                if img_itk is None:
                     continue
                 #print("Image Size: ", size)
                 # if time.time() - prev_show > 0.03:
                 #     if data_queue[9] != None:
                 #         canvas.itemconfigure(img_ref, image=data_queue[9][0])
                 # canvas.itemconfig(fps_ref, text="FPS: " + fps)
-
+		    if img_file_size != prev_img_file_size:
+                    img.save("./" + image_folder + "/" + str(time.time()) + ".png")
+                    prev_img_file_size = img_file_size
+                    unique_img_count += 1
+                    print(unique_img_count)
                 ws.update()
                 img_count += 1
+     		    img.close()
                 print("Image count: ", img_count)
 
                 #get current IMU readings
@@ -105,7 +114,9 @@ def main():
 
 
             except KeyboardInterrupt: 
-                print("Closing socket")
+                print("Keyboard Interrupted")
+                print("Post-processing Playback...")
+                images_to_video()
                 client.close()
                 s.close()
                 ws.destroy()
@@ -116,6 +127,25 @@ def main():
                 s.close()
                 canvas.destroy()
                 break
+
+def images_to_video():
+    images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
+    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    height, width, layers = frame.shape
+
+    video = cv2.VideoWriter('plaback.avi', 0, 20, (width,height))
+
+    for image in images:
+        video.write(cv2.imread(os.path.join(image_folder, image)))
+
+    cv2.destroyAllWindows()
+    video.release()
+    dir_name = image_folder + "/"
+    all_images = os.listdir(dir_name)
+
+    for item in all_images:
+        if item.endswith(".png"):
+            os.remove(os.path.join(dir_name, item))
 
 def getImage(client, clientInfo, s):
     buf = b''
@@ -128,13 +158,13 @@ def getImage(client, clientInfo, s):
     except (ConnectionResetError, ConnectionAbortedError) as e:
         print("Before recv2")
         res_client, res_clientInfo = s.accept()
-        return (None, res_client, res_clientInfo)
+        return (0, None, None, res_client, res_clientInfo)
     size = struct.unpack('!i', buf)[0]
     temp = time.time()
     num = RecvN(client, size)
     image = PIL.Image.open(io.BytesIO(num)).convert('RGBA').rotate(270, fillcolor = 0)
-    img = itk.PhotoImage(image)
-    return (img, client, clientInfo)
+    img_itk = itk.PhotoImage(image)
+    return (size, image, img_itk, client, clientInfo)
 
 def RecvN(socket, n):
     totalContent = b''
