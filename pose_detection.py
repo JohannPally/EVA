@@ -17,7 +17,7 @@ accum_images = []
 times = []
 
 # cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture('y_s2.MOV')
+cap = cv2.VideoCapture('far.MOV')
 
 with mp_pose.Pose(
         min_detection_confidence=0.5,
@@ -44,21 +44,21 @@ with mp_pose.Pose(
             accum_results.append((time.time(), results.pose_landmarks.landmark))
             accum_images.append(image)
         
-        """
-        #Draw the pose annotation on the image.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        mp_drawing.draw_landmarks(
-            image,
-            results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
-        # Flip the image horizontally for a selfie-view display.
         
-        cv2.imshow('MediaPipe Pose', cv2.flip(image,0))
-        if cv2.waitKey(1) & 0xFF == 27:
-          break
-        """
+        #Draw the pose annotation on the image.
+        # image.flags.writeable = True
+        # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        # mp_drawing.draw_landmarks(
+        #     image,
+        #     results.pose_landmarks,
+        #     mp_pose.POSE_CONNECTIONS,
+        #     landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
+        # # Flip the image horizontally for a selfie-view display.
+        
+        # cv2.imshow('MediaPipe Pose', cv2.flip(image,0))
+        # if cv2.waitKey(1) & 0xFF == 27:
+        #   break
+        
         
 
 cap.release()
@@ -531,6 +531,7 @@ def get_moving(xs, ys, n):
 
 def get_stnd_x_y_diff(xs, ys, n):
     stnd = get_stnd(xs,ys,n)
+    print(stnd)
 
     x_lshldr = xs[2]
     x_lwrst = xs[0]
@@ -549,6 +550,7 @@ def get_stnd_x_y_diff(xs, ys, n):
 
     
     for i in range(n):
+        print(y_lwrst[i],y_lshldr[i])
         olx.append((x_lwrst[i]-x_lshldr[i])/stnd)
         oly.append((y_lwrst[i]-y_lshldr[i])/stnd)
         orx.append((x_rwrst[i]-x_rshldr[i])/stnd)
