@@ -65,7 +65,7 @@ def main():
         print("After Accept")
         prev = time.time()
         prev_show = time.time()
-	  prev_img_file_size = 0
+        prev_img_file_size = 0
         while True:
             try:
                 # start_time = time.time() # start time of the loop
@@ -90,14 +90,14 @@ def main():
                 #     if data_queue[9] != None:
                 #         canvas.itemconfigure(img_ref, image=data_queue[9][0])
                 # canvas.itemconfig(fps_ref, text="FPS: " + fps)
-		    if img_file_size != prev_img_file_size:
+                if img_file_size != prev_img_file_size:
                     img.save("./" + image_folder + "/" + str(time.time()) + ".png")
                     prev_img_file_size = img_file_size
                     unique_img_count += 1
                     print(unique_img_count)
                 ws.update()
                 img_count += 1
-     		    img.close()
+                img.close()
                 print("Image count: ", img_count)
 
                 #get current IMU readings

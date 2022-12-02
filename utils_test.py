@@ -11,12 +11,12 @@ import numpy as np
 # from mpl_toolkits.mplot3d import Axes3D
 
 agent = Analyzer()
-cap = cv2.VideoCapture('side.MOV')
+cap = cv2.VideoCapture('videos/side.MOV')
 timeout = time.time() + 40
 while cap.isOpened() and (time.time() < timeout):
     success, image = cap.read()
     if success:
-        imu = []
+        imu = [] #TODO include imu data
         agent.update(image, imu)
 
 agent.cleanup()

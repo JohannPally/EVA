@@ -62,6 +62,7 @@ class Analyzer:
         if self.skeletonize(image, imu_readings):
             label, window = self.update_activity_segmentation()
             return self.error_check(label, window)
+        return None
 
     def error_check(self, label, window):
         if label is None:
@@ -258,6 +259,8 @@ class Analyzer:
         return motion_cond or y_cond
 
     def skeletonize(self, image, imu_read):
+        if image is not None:
+            return False
         image.flags.writeable = False
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = self.pose.process(image)
