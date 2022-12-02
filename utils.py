@@ -44,6 +44,11 @@ class Analyzer:
         self.all_ys = []
         self.all_xs = []
 
+        self.FLEXION_BOTTOM_ERROR_STRING = 'caution, at the bottom of your rep, bend your arms to 90 degrees'
+        self.FLEXION_TOP_ERROR_STRING = 'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
+        self.TILT_DOWN_ERROR_STRING = 'caution, bar tilted while going down'
+        self.TILT_UP_ERROR_STRING = 'caution, bar tilted while going up'
+
     def reset_fsm(self):
         self.moving_flag = True
         self.moving_sf = 0
@@ -67,19 +72,37 @@ class Analyzer:
 
         match label:
             case 'down':
-                print('error down')
+                if self.alert_tilt(start_frame, end_frame):
+                    return self.TILT_DOWN_ERROR_STRING
             case 'up':
-                print('error up')
+                if self.alert_tilt(start_frame, end_frame):
+                    return self.TILT_UP_ERROR_STRING
             case 'hold_top':
-                print('error hold top')
+                if self.alert_flexion_top(start_frame, end_frame):
+                    return self.FLEXION_TOP_ERROR_STRING
             case 'hold_bottom':
-                alert = self.alert_flexion(start_frame, end_frame)
-                print('***error hold bottom', alert)
+                if self.alert_flexion_bottom(start_frame, end_frame):
+                    return self.FLEXION_BOTTOM_ERROR_STRING
 
-        return alert
+        return None
         
+    def alert_tilt(self, start, end):
+        #TODO implement cody's IMU inference
+        return False
 
-    def alert_flexion(self, start, end):
+
+    def alert_flexion_top(self, start, end):
+        angles = []
+        for frame in range(start, end):
+            angles.append(self.get_flexion_angles(frame))
+        
+        np.sort(angles)
+        for i in range(10):
+            if any(a > 170 for a in angles[-1*i]):
+                return True
+        return False
+
+    def alert_flexion_bottom(self, start, end):
         angles = []
         for frame in range(start, end):
             angles.append(self.get_flexion_angles(frame))
