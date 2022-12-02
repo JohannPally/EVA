@@ -37,7 +37,7 @@ class Analyzer:
         self.up_windows = []
 
         self.top_threshold = .5
-        self.bottom_threshold = .2
+        self.bottom_threshold = .15
 
         self.reset_fsm()
 
@@ -55,12 +55,67 @@ class Analyzer:
 
     def update(self, image, imu_readings):
         if self.skeletonize(image, imu_readings):
-            start, end = self.update_activity_segmentation()
-            # if start is not None and end is not None:
-            #     print(start, end)
-            #TODO DO INJURY MOTION CHECKING WITH OUTPUT ^^
-            #TODO ANGLE
-        return
+            label, window = self.update_activity_segmentation()
+            return self.error_check(label, window)
+
+    def error_check(self, label, window):
+        if label is None:
+            return True
+        
+        start_frame, end_frame = window
+        alert = False
+
+        match label:
+            case 'down':
+                print('error down')
+            case 'up':
+                print('error up')
+            case 'hold_top':
+                print('error hold top')
+            case 'hold_bottom':
+                alert = self.alert_flexion(start_frame, end_frame)
+                print('***error hold bottom', alert)
+
+        return alert
+        
+
+    def alert_flexion(self, start, end):
+        angles = []
+        for frame in range(start, end):
+            angles.append(self.get_flexion_angles(frame))
+        
+        np.sort(angles)
+        for i in range(10):
+            if any(a > 100 for a in angles[i]):
+                return True
+        return False
+
+    def get_flexion_angles(self, frame):
+        pose = self.skeletons[frame]
+        r_wrst = pose[self.R_WRIST]
+        r_elb = pose[self.R_ELBOW]
+        r_shld = pose[self.R_SHOULDER]
+
+        l_wrst = pose[self.L_WRIST]
+        l_elb = pose[self.L_ELBOW]
+        l_shld = pose[self.L_SHOULDER]
+
+        l_fore = np.array([l_wrst.x-l_elb.x, l_wrst.y-l_elb.y])
+        l_up = np.array([l_shld.x-l_elb.x, l_shld.y-l_elb.y])
+
+        r_fore = np.array([r_wrst.x-r_elb.x, r_wrst.y-r_elb.y])
+        r_up = np.array([r_shld.x-r_elb.x, r_shld.y-r_shld.y])
+
+        l_num = np.dot(l_fore, l_up)
+        r_num = np.dot(r_fore, r_up)
+
+        l_den = np.linalg.norm(l_fore)*np.linalg.norm(l_up)
+        r_den = np.linalg.norm(r_fore)*np.linalg.norm(r_up)
+
+        l_angle = np.arccos(l_num/l_den)
+        r_angle = np.arccos(r_num/r_den)
+
+        return [l_angle, r_angle]
     
     def cleanup(self):
         if len(self.down_windows) > len(self.up_windows):
