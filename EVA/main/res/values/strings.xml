@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">EVA</string>
+    <string name="start_connection">start connection</string>
+    <string name="close_connection">close connection</string>
+</resources>
