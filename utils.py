@@ -48,6 +48,8 @@ class Analyzer:
         self.FLEXION_TOP_ERROR_STRING = 'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
         self.TILT_DOWN_ERROR_STRING = 'caution, bar tilted while going down'
         self.TILT_UP_ERROR_STRING = 'caution, bar tilted while going up'
+        self.INSTABILITY_ERROR_STRING = 'caution, the motion is shaky'
+        self.ROTATOIN_ERROR_STRING = 'caution, your wrist might be rotating'
 
     def reset_fsm(self):
         self.moving_flag = True
@@ -58,6 +60,8 @@ class Analyzer:
         self.up_sf = -1
         self.hold_sf = -1
 
+    #***************MAIN FUNCTIONS***************
+    #============================================
     def update(self, image, imu_readings):
         if self.skeletonize(image, imu_readings):
             # print('skeletonize successful')
@@ -76,11 +80,19 @@ class Analyzer:
 
         match label:
             case 'down':
-                if self.alert_tilt(start_frame, end_frame):
+                if self.alert_tilt():
                     return self.TILT_DOWN_ERROR_STRING
+                if self.alert_instability():
+                    return self.INSTABILITY_ERROR_STRING
+                if self.alert_rotation():
+                    return self.ROTATOIN_ERROR_STRING
             case 'up':
                 if self.alert_tilt(start_frame, end_frame):
                     return self.TILT_UP_ERROR_STRING
+                if self.alert_instability():
+                    return self.INSTABILITY_ERROR_STRING
+                if self.alert_rotation():
+                    return self.ROTATOIN_ERROR_STRING
             case 'hold_top':
                 if self.alert_flexion_top(start_frame, end_frame):
                     return self.FLEXION_TOP_ERROR_STRING
@@ -106,19 +118,62 @@ class Analyzer:
             plt.axvspan(hold[0], hold[1], color = 'gray')
 
         plt.show()
-        
-    def alert_tilt(self, start, end):
-        #TODO implement cody's IMU inference
+    #============================================
+
+    #================IMU ERROR HELPER FUNCTIONS=============
+    def alert_instability(self):
         return False
+        data_mat = np.vstack(self.imu_readings[-11:-1])
 
+        gr_x = data_mat[:, 3].reshape(1, 10)
+        gr_y = data_mat[:, 4].reshape(1, 10)
+    
+        if (np.var(gr_x) > 20 or np.var(gr_y) > 20):
+            return True
+        else:
+            return False
+    
+    def alert_rotation(self):
+        return False
+        data_mat = np.vstack(self.imu_readings[-11:-1])
 
+        xl_y = data_mat[:, 1].reshape(1, 10)
+        avg_xl_y = np.average(xl_y)
+        orient_x = data_mat[:, 9].reshape(1, 10)
+        avg_orient_x = np.average(orient_x)
+
+        if (avg_orient_x < -95 and avg_xl_y > -1.01):
+            return True
+    
+        if (avg_orient_x > -85 and avg_xl_y > -1.01):
+            return True
+        return False
+        
+        
+    def alert_tilt(self):
+        return False
+        date_mat = np.vstack(self.imu_readings[-11:-1])
+        xl_x = data_mat[:, 0].reshape(1, 10)
+        avg_xl_x = np.average(xl_x)
+        orient_y = data_mat[:, 10].reshape(1, 10)
+        avg_orient_y = np.average(orient_y)
+        data_mat = np.vstack(self.imu_readings[-11:-1])
+        if (avg_orient_y < -2 and avg_xl_x > 0.2):
+            return True
+
+        if (avg_orient_y > 2 and avg_xl_x < -0.2):
+            return True
+
+        return False
+    #================================================
+    #==============IMAGE ERROR HELPER FUNCS===========
     def alert_flexion_top(self, start, end):
         angles = []
         for frame in range(start, end):
             angles.append(self.get_flexion_angles(frame))
         
         np.sort(angles)
-        for i in range(10):
+        for i in range(min(10, len(angles))):
             if any(a > 170 for a in angles[-1*i]):
                 return True
         return False
@@ -129,7 +184,7 @@ class Analyzer:
             angles.append(self.get_flexion_angles(frame))
         
         np.sort(angles)
-        for i in range(10):
+        for i in range(min(10, len(angles))):
             if any(a > 100 for a in angles[i]):
                 return True
         return False
@@ -160,6 +215,7 @@ class Analyzer:
         r_angle = np.arccos(r_num/r_den)
 
         return [l_angle, r_angle]
+    #================================================
     
     def cleanup(self):
         if len(self.down_windows) > len(self.up_windows):
