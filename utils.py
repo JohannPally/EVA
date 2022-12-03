@@ -7,16 +7,17 @@ from matplotlib.widgets import Slider
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
+
 class Analyzer:
     def __init__(self):
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(
-                min_detection_confidence=0.5,
-                min_tracking_confidence=0.5,
-                smooth_landmarks=True,
-                smooth_segmentation=True)
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+            smooth_landmarks=True,
+            smooth_segmentation=True)
 
         self.L_WRIST = self.mp_pose.PoseLandmark.LEFT_WRIST
         self.L_ELBOW = self.mp_pose.PoseLandmark.LEFT_ELBOW
@@ -60,8 +61,8 @@ class Analyzer:
         self.up_sf = -1
         self.hold_sf = -1
 
-    #***************MAIN FUNCTIONS***************
-    #============================================
+    # ***************MAIN FUNCTIONS***************
+    # ============================================
     def update(self, image, imu_readings):
         if self.skeletonize(image, imu_readings):
             # print('skeletonize successful')
@@ -74,68 +75,83 @@ class Analyzer:
     def error_check(self, label, window):
         if label is None:
             return True
-        
+
         start_frame, end_frame = window
         alert = False
 
-        match label:
-            case 'down':
-                if self.alert_tilt():
-                    return self.TILT_DOWN_ERROR_STRING
-                if self.alert_instability():
-                    return self.INSTABILITY_ERROR_STRING
-                if self.alert_rotation():
-                    return self.ROTATOIN_ERROR_STRING
-            case 'up':
-                if self.alert_tilt():
-                    return self.TILT_UP_ERROR_STRING
-                if self.alert_instability():
-                    return self.INSTABILITY_ERROR_STRING
-                if self.alert_rotation():
-                    return self.ROTATOIN_ERROR_STRING
-            case 'hold_top':
-                if self.alert_flexion_top(start_frame, end_frame):
-                    return self.FLEXION_TOP_ERROR_STRING
-            case 'hold_bottom':
-                if self.alert_flexion_bottom(start_frame, end_frame):
-                    return self.FLEXION_BOTTOM_ERROR_STRING
+        # match label:
+            # case 'down':
+
+        if (label == "down"):
+            if self.alert_tilt():
+                return self.TILT_DOWN_ERROR_STRING
+            if self.alert_instability():
+                return self.INSTABILITY_ERROR_STRING
+            if self.alert_rotation():
+                return self.ROTATOIN_ERROR_STRING
+        # case 'up':
+        elif (label == "up"):
+            if self.alert_tilt():
+                return self.TILT_UP_ERROR_STRING
+            if self.alert_instability():
+                return self.INSTABILITY_ERROR_STRING
+            if self.alert_rotation():
+                return self.ROTATOIN_ERROR_STRING
+        # case 'hold_top':
+
+        elif (label == "hold_top"):
+            if self.alert_flexion_top(start_frame, end_frame):
+                return self.FLEXION_TOP_ERROR_STRING
+            if self.alert_tilt():
+                return self.TILT_UP_ERROR_STRING
+            if self.alert_rotation():
+                return self.ROTATOIN_ERROR_STRING
+        # case 'hold_bottom':
+
+        elif (label == "hold_bottom"):
+            if self.alert_flexion_bottom(start_frame, end_frame):
+                return self.FLEXION_BOTTOM_ERROR_STRING
+            if self.alert_tilt():
+                return self.TILT_UP_ERROR_STRING
+            if self.alert_rotation():
+                return self.ROTATOIN_ERROR_STRING
 
         return None
 
     def plot_segmentation(self):
         plt.plot(np.arange(len(self.all_ys)), self.all_ys)
-        plt.axhline(y = self.top_threshold, color = 'r', linestyle = '-')
-        plt.axhline(y = self.bottom_threshold, color = 'b', linestyle = '-')
-        plt.ylim(-.5,1)
+        plt.axhline(y=self.top_threshold, color='r', linestyle='-')
+        plt.axhline(y=self.bottom_threshold, color='b', linestyle='-')
+        plt.ylim(-.5, 1)
 
         for down in self.down_windows:
-            plt.axvspan(down[0], down[1], color = 'lime')
+            plt.axvspan(down[0], down[1], color='red')
 
         for up in self.up_windows:
-            plt.axvspan(up[0], up[1], color = 'cyan')
+            plt.axvspan(up[0], up[1], color='lime')
 
         for hold in self.hold_windows:
-            plt.axvspan(hold[0], hold[1], color = 'gray')
+            plt.axvspan(hold[0], hold[1], color='purple')
 
         plt.show()
-    #============================================
+    # ============================================
 
-    #================IMU ERROR HELPER FUNCTIONS=============
+    # ================IMU ERROR HELPER FUNCTIONS=============
     def alert_instability(self):
-        return False
-        data_mat = np.vstack(self.imu_readings[-11:-1])
+        # return False
+        data_mat = self.get_data_mat()
 
         gr_x = data_mat[:, 3].reshape(1, 10)
         gr_y = data_mat[:, 4].reshape(1, 10)
-    
+
         if (np.var(gr_x) > 20 or np.var(gr_y) > 20):
             return True
         else:
             return False
-    
+
     def alert_rotation(self):
-        return False
-        data_mat = np.vstack(self.imu_readings[-11:-1])
+        # return False
+        data_mat = self.get_data_mat()
 
         xl_y = data_mat[:, 1].reshape(1, 10)
         avg_xl_y = np.average(xl_y)
@@ -144,20 +160,18 @@ class Analyzer:
 
         if (avg_orient_x < -95 and avg_xl_y > -1.01):
             return True
-    
+
         if (avg_orient_x > -85 and avg_xl_y > -1.01):
             return True
         return False
-        
-        
+
     def alert_tilt(self):
-        return False
-        date_mat = np.vstack(self.imu_readings[-11:-1])
+        # return False
+        data_mat = self.get_data_mat()
         xl_x = data_mat[:, 0].reshape(1, 10)
         avg_xl_x = np.average(xl_x)
         orient_y = data_mat[:, 10].reshape(1, 10)
         avg_orient_y = np.average(orient_y)
-        data_mat = np.vstack(self.imu_readings[-11:-1])
         if (avg_orient_y < -2 and avg_xl_x > 0.2):
             return True
 
@@ -165,13 +179,26 @@ class Analyzer:
             return True
 
         return False
-    #================================================
-    #==============IMAGE ERROR HELPER FUNCS===========
+    # ================================================
+    # ==============IMAGE ERROR HELPER FUNCS===========
+    def get_data_mat(self):
+        return np.vstack((
+                              self.imu_readings[-10],
+                              self.imu_readings[-9],
+                              self.imu_readings[-8],
+                              self.imu_readings[-7],
+                              self.imu_readings[-6],
+                              self.imu_readings[-5],
+                              self.imu_readings[-4],
+                              self.imu_readings[-3],
+                              self.imu_readings[-2],
+                              self.imu_readings[-1]))
+
     def alert_flexion_top(self, start, end):
         angles = []
         for frame in range(start, end):
             angles.append(self.get_flexion_angles(frame))
-        
+
         np.sort(angles)
         for i in range(min(10, len(angles))):
             if any(a > 170 for a in angles[-1*i]):
@@ -182,7 +209,7 @@ class Analyzer:
         angles = []
         for frame in range(start, end):
             angles.append(self.get_flexion_angles(frame))
-        
+
         np.sort(angles)
         for i in range(min(10, len(angles))):
             if any(a > 100 for a in angles[i]):
@@ -215,8 +242,8 @@ class Analyzer:
         r_angle = np.arccos(r_num/r_den)
 
         return [l_angle, r_angle]
-    #================================================
-    
+    # ================================================
+
     def cleanup(self):
         if len(self.down_windows) > len(self.up_windows):
             self.down_windows.pop()
@@ -229,29 +256,29 @@ class Analyzer:
             if not self.detect_moving():
                 print('no longer moving')
                 self.moving_flag = False
-                self.moving_windows.append([self.moving_sf])            
+                self.moving_windows.append([self.moving_sf])
             return None, None
-        
-        #sitting at bench
+
+        # sitting at bench
         if self.detect_moving():
             print('moving, reset flags')
             self.reset_fsm()
             return None, None
 
-        #going down
+        # going down
         if self.down_flag:
-            #finish holding at the top
+            # finish holding at the top
             if self.hold_flag and self.check_threshold(self.stnd_ys, self.top_threshold, '<'):
-                print('start going down', self.stnd_ys)
+                print('start going down')
                 self.hold_flag = False
                 self.down_sf = self.frame_async
                 temp_wind = [self.hold_sf, self.frame_async]
                 self.hold_windows.append(temp_wind)
                 return 'hold_top', temp_wind
-                
-            #reach bottom of rep
+
+            # reach bottom of rep
             elif not self.hold_flag and self.check_threshold(self.stnd_ys, self.bottom_threshold, '<'):
-                print('stop going down', self.stnd_ys)
+                print('stop going down')
                 self.down_flag = False
                 self.hold_flag = True
                 self.hold_sf = self.frame_async
@@ -259,21 +286,21 @@ class Analyzer:
                 self.down_windows.append(temp_wind)
                 print('down', temp_wind)
                 return 'down', temp_wind
-        
-        #going up
+
+        # going up
         else:
-            #finish holding at bottom
+            # finish holding at bottom
             if self.hold_flag and self.check_threshold(self.stnd_ys, self.bottom_threshold, '>'):
-                print('start going up', self.stnd_ys)
+                print('start going up')
                 self.hold_flag = False
                 self.up_sf = self.frame_async
                 temp_wind = [self.hold_sf, self.frame_async]
                 self.hold_windows.append(temp_wind)
                 return 'hold_bottom', temp_wind
-                
-            #reach top of rep
+
+            # reach top of rep
             elif not self.hold_flag and self.check_threshold(self.stnd_ys, self.top_threshold, '>'):
-                print('stop going up', self.stnd_ys)
+                print('stop going up')
                 self.down_flag = True
                 self.hold_flag = True
                 self.hold_sf = self.frame_async
@@ -286,7 +313,7 @@ class Analyzer:
 
         return None, None
 
-    #========SUPPORT FUNCTIONS============
+    # ========SUPPORT FUNCTIONS============
 
     def check_threshold(self, list, threshold, symbol):
         if symbol == '>':
@@ -298,7 +325,7 @@ class Analyzer:
 
     def set_standardized_values(self):
         pose = self.skeletons[self.frame_async]
-        
+
         l_shld = pose[self.L_SHOULDER]
         l_wst = pose[self.L_WRIST]
         r_shld = pose[self.R_SHOULDER]
@@ -315,23 +342,25 @@ class Analyzer:
         self.all_ys.append([l_y, r_y])
         self.all_xs.append([l_y, r_y])
 
-        self.stnd_ys, self.stnd_xs =  [l_y, r_y],  [l_x, r_x]
+        self.stnd_ys, self.stnd_xs = [l_y, r_y],  [l_x, r_x]
 
     def detect_moving(self):
         if self.frame_async < 30:
             return True
 
         ske_temp = self.skeletons[self.frame_async-30:self.frame_async]
-        lx,ly,rx,ry = [],[],[],[]
+        lx, ly, rx, ry = [], [], [], []
 
         for pose in ske_temp:
             lx.append(pose[self.L_SHOULDER].x)
             ly.append(pose[self.L_SHOULDER].y)
             rx.append(pose[self.R_SHOULDER].x)
             ry.append(pose[self.R_SHOULDER].y)
-        
-        motion_cond = self.check_threshold([np.var(lx), np.var(ly), np.var(rx), np.var(ry)], .001, '>')
-        y_cond = self.check_threshold(self.stnd_ys, self.bottom_threshold-1, '<') or self.check_threshold(self.stnd_ys, self.top_threshold+1, '>')
+
+        motion_cond = self.check_threshold(
+            [np.var(lx), np.var(ly), np.var(rx), np.var(ry)], .001, '>')
+        y_cond = self.check_threshold(self.stnd_ys, self.bottom_threshold-1,
+                                      '<') or self.check_threshold(self.stnd_ys, self.top_threshold+1, '>')
         return motion_cond or y_cond
 
     def skeletonize(self, image, imu_read):
