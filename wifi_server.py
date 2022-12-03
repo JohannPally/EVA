@@ -70,7 +70,7 @@ def main():
         print("After Accept")
         prev = time.time()
         prev_show = time.time()
-        timeout = time.time() + 45
+        timeout = time.time() + 30
         
         while (time.time() < timeout):
             if cv2.waitKey(1) & 0xFF == 27:
@@ -86,7 +86,6 @@ def main():
                 #print("server recv from: ", clientInfo)
                 
                 (nums, img_file_size, img, img_itk, client_res, clientInfo_res) = getImage(client, clientInfo, s)
-
                 
 
                 client = client_res
@@ -97,10 +96,23 @@ def main():
 
                 #get the current IMU reading
                 cur_IMU_reading = request_IMU_data()
+
                 #update the agent
                 returned = agent.update(nums, cur_IMU_reading[0])
+
+                # codes = [agent.FLEXION_BOTTOM_ERROR_CODE, agent.FLEXION_TOP_ERROR_CODE, agent.TILT_DOWN_ERROR_CODE,
+                #         agent.TILT_UP_ERROR_CODE, agent.INSTABILITY_ERROR_CODE, agent.ROTATOIN_ERROR_CODE]
+                # for code in codes:
+                #     val = code.encode("utf-8")
+                #     client.send(val)
+                #     print(code,val)
+                # break
+                
                 if returned is not None:
-                    print('\033[93m'+returned+'\033[93m')
+                    # ('\033[93m'+returned+'\033[93m')
+                    print(returned)
+                    val = returned.encode("utf-8")
+                    client.send(val)
 
 #                 print("time diff image: " + str(time.time() - time_before_agent))
 #                 print("Image Size: ", img_file_size)

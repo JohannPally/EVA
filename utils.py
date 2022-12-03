@@ -44,14 +44,15 @@ class Analyzer:
 
         self.all_ys = []
         self.all_xs = []
-
-        self.FLEXION_BOTTOM_ERROR_CODE = 1 #'caution, at the bottom of your rep, bend your arms to 90 degrees'
-        self.FLEXION_TOP_ERROR_CODE = 2 #'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
-        self.TILT_DOWN_ERROR_CODE = 3 #'caution, bar tilted while going down'
-        self.TILT_UP_ERROR_CODE = 4 #'caution, bar tilted while going up'
-        self.INSTABILITY_ERROR_CODE = 5 #'caution, the motion is shaky'
-        self.ROTATOIN_ERROR_CODE = 6 #'caution, your wrist might be rotating'
-
+        
+        # self.ALL_CLEAR_CODE = "0"
+        self.FLEXION_BOTTOM_ERROR_CODE = "1" #'caution, at the bottom of your rep, bend your arms to 90 degrees'
+        self.FLEXION_TOP_ERROR_CODE = "2" #'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
+        self.TILT_DOWN_ERROR_CODE = "3" #'caution, bar tilted while going down'
+        self.TILT_UP_ERROR_CODE = "4" #'caution, bar tilted while going up'
+        self.INSTABILITY_ERROR_CODE = "5" #'caution, the motion is shaky'
+        self.ROTATOIN_ERROR_CODE = "6" #'caution, your wrist might be rotating'
+        
     def reset_fsm(self):
         self.moving_flag = True
         self.moving_sf = 0
@@ -74,7 +75,7 @@ class Analyzer:
 
     def error_check(self, label, window):
         if label is None:
-            return True
+            return None
 
         start_frame, end_frame = window
         alert = False
