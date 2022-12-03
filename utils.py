@@ -44,12 +44,12 @@ class Analyzer:
         self.all_ys = []
         self.all_xs = []
 
-        self.FLEXION_BOTTOM_ERROR_STRING = 'caution, at the bottom of your rep, bend your arms to 90 degrees'
-        self.FLEXION_TOP_ERROR_STRING = 'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
-        self.TILT_DOWN_ERROR_STRING = 'caution, bar tilted while going down'
-        self.TILT_UP_ERROR_STRING = 'caution, bar tilted while going up'
-        self.INSTABILITY_ERROR_STRING = 'caution, the motion is shaky'
-        self.ROTATOIN_ERROR_STRING = 'caution, your wrist might be rotating'
+        self.FLEXION_BOTTOM_ERROR_CODE = 1 #'caution, at the bottom of your rep, bend your arms to 90 degrees'
+        self.FLEXION_TOP_ERROR_CODE = 2 #'caution, at the top of your rep, do not lock your elbows, allow for a slight bend'
+        self.TILT_DOWN_ERROR_CODE = 3 #'caution, bar tilted while going down'
+        self.TILT_UP_ERROR_CODE = 4 #'caution, bar tilted while going up'
+        self.INSTABILITY_ERROR_CODE = 5 #'caution, the motion is shaky'
+        self.ROTATOIN_ERROR_CODE = 6 #'caution, your wrist might be rotating'
 
     def reset_fsm(self):
         self.moving_flag = True
@@ -81,24 +81,24 @@ class Analyzer:
         match label:
             case 'down':
                 if self.alert_tilt():
-                    return self.TILT_DOWN_ERROR_STRING
+                    return self.TILT_DOWN_ERROR_CODE
                 if self.alert_instability():
-                    return self.INSTABILITY_ERROR_STRING
+                    return self.INSTABILITY_ERROR_CODE
                 if self.alert_rotation():
-                    return self.ROTATOIN_ERROR_STRING
+                    return self.ROTATOIN_ERROR_CODE
             case 'up':
                 if self.alert_tilt():
-                    return self.TILT_UP_ERROR_STRING
+                    return self.TILT_UP_ERROR_CODE
                 if self.alert_instability():
-                    return self.INSTABILITY_ERROR_STRING
+                    return self.INSTABILITY_ERROR_CODE
                 if self.alert_rotation():
-                    return self.ROTATOIN_ERROR_STRING
+                    return self.ROTATOIN_ERROR_CODE
             case 'hold_top':
                 if self.alert_flexion_top(start_frame, end_frame):
-                    return self.FLEXION_TOP_ERROR_STRING
+                    return self.FLEXION_TOP_ERROR_CODE
             case 'hold_bottom':
                 if self.alert_flexion_bottom(start_frame, end_frame):
-                    return self.FLEXION_BOTTOM_ERROR_STRING
+                    return self.FLEXION_BOTTOM_ERROR_CODE
 
         return None
 
