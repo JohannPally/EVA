@@ -60,9 +60,12 @@ class Analyzer:
 
     def update(self, image, imu_readings):
         if self.skeletonize(image, imu_readings):
+            # print('skeletonize successful')
             label, window = self.update_activity_segmentation()
             return self.error_check(label, window)
-        return None
+        else:
+            # print('skeletonize unsuccessful')
+            return None
 
     def error_check(self, label, window):
         if label is None:
@@ -86,6 +89,23 @@ class Analyzer:
                     return self.FLEXION_BOTTOM_ERROR_STRING
 
         return None
+
+    def plot_segmentation(self):
+        plt.plot(np.arange(len(self.all_ys)), self.all_ys)
+        plt.axhline(y = self.top_threshold, color = 'r', linestyle = '-')
+        plt.axhline(y = self.bottom_threshold, color = 'b', linestyle = '-')
+        plt.ylim(-.5,1)
+
+        for down in self.down_windows:
+            plt.axvspan(down[0], down[1], color = 'lime')
+
+        for up in self.up_windows:
+            plt.axvspan(up[0], up[1], color = 'cyan')
+
+        for hold in self.hold_windows:
+            plt.axvspan(hold[0], hold[1], color = 'gray')
+
+        plt.show()
         
     def alert_tilt(self, start, end):
         #TODO implement cody's IMU inference
@@ -259,7 +279,7 @@ class Analyzer:
         return motion_cond or y_cond
 
     def skeletonize(self, image, imu_read):
-        if image is not None:
+        if image is None:
             return False
         image.flags.writeable = False
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
