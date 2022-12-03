@@ -37,7 +37,7 @@ class Analyzer:
         self.up_windows = []
 
         self.top_threshold = .5
-        self.bottom_threshold = .15
+        self.bottom_threshold = .3
 
         self.reset_fsm()
 
@@ -87,7 +87,7 @@ class Analyzer:
                 if self.alert_rotation():
                     return self.ROTATOIN_ERROR_STRING
             case 'up':
-                if self.alert_tilt(start_frame, end_frame):
+                if self.alert_tilt():
                     return self.TILT_UP_ERROR_STRING
                 if self.alert_instability():
                     return self.INSTABILITY_ERROR_STRING
@@ -331,7 +331,7 @@ class Analyzer:
             ry.append(pose[self.R_SHOULDER].y)
         
         motion_cond = self.check_threshold([np.var(lx), np.var(ly), np.var(rx), np.var(ry)], .001, '>')
-        y_cond = self.check_threshold(self.stnd_ys, -0.2, '<') or self.check_threshold(self.stnd_ys, .8, '>')
+        y_cond = self.check_threshold(self.stnd_ys, self.bottom_threshold-1, '<') or self.check_threshold(self.stnd_ys, self.top_threshold+1, '>')
         return motion_cond or y_cond
 
     def skeletonize(self, image, imu_read):
