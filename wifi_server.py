@@ -26,7 +26,8 @@ PORT = "/dev/cu.usbmodem14303"
 my_ser_port = ser.Serial(PORT, 115200)
 serial_cmd = "r"
 encoded_cmd = serial_cmd.encode()
-# #buffer for storing current IMU reading, size of 15: {cur-xl, cur-gr, cur-mg, cur-orient, cur-position}
+
+#buffer for storing current IMU reading, size of 15: {cur-xl, cur-gr, cur-mg, cur-orient, cur-position}
 cur_IMU_reading = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 #queue for storing image/IMU-reading sequence
