@@ -1,8 +1,13 @@
 # Erroneous-Vector-Assessment
-EVA pairs a phone camera with IMU to provide real time, high fidelity feedback to athletes performing potentially injury inducing repetitive actions. At the moment, our team is targeting weightlifting and free throw basketball form.
+EVA pairs a phone camera with IMU to provide real time, high fidelity feedback to athletes performing potentially injury inducing repetitive actions. At the moment, our team is targeting weightlifting, specifically the incline bench press motion.
 
 Currently:
-With Python 3.8 installed, run python3.8 pose_detection in terminal. Consider doing pip3 install mediapipe if module not found.
+With Python 3.8 installed, run python3.8 pose_detection in terminal. Consider doing pip3 install on any packages which are not installed.
+
+***
+
+# DEMO
+ Note, have the android code (EVA/main folder) installed and ready to execute on an android emulator or android phone. Laslty, change any noted hardcoded addresses within wifi_server.py. To run, execute wifi_server.py and press the respective start and stop connection buttons on the app interface to start or end streaming.
 
 # Analyzer
 
