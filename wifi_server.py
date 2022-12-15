@@ -26,20 +26,21 @@ PORT = "/dev/cu.usbmodem14303"
 my_ser_port = ser.Serial(PORT, 115200)
 serial_cmd = "r"
 encoded_cmd = serial_cmd.encode()
-# 
-# #buffer for storing current IMU reading, size of 15: {cur-xl, cur-gr, cur-mg, cur-orient, cur-position}
+
+#buffer for storing current IMU reading, size of 15: {cur-xl, cur-gr, cur-mg, cur-orient, cur-position}
 cur_IMU_reading = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 #queue for storing image/IMU-reading sequence
 data_queue = deque([None, None, None, None, None, None, None, None, None, None])
 image_folder = "images"
 enabled_playback = False
+agent = Analyzer()
 
 def main():
 
     #global cur_IMU_reading
 
-    HOST = "10.192.181.22" # IP address of your Raspberry PI
+    HOST = "192.168.1.76" # IP address of your Raspberry PI
     PORT = 6650            # Port to listen on (non-privileged ports are > 1023)
     img_count = 0
 
@@ -53,7 +54,7 @@ def main():
         height = 640
         )      
     canvas.pack()
-    agent = Analyzer()
+    
     img_ref = canvas.create_image(242, 320, anchor=CENTER)
     fps_ref = canvas.create_text(70, 50, text="FPS: 0.0", fill="black", font=('Helvetica 15 bold')) 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -70,7 +71,7 @@ def main():
         print("After Accept")
         prev = time.time()
         prev_show = time.time()
-        timeout = time.time() + 45
+        timeout = time.time() + 100
         
         while (time.time() < timeout):
             if cv2.waitKey(1) & 0xFF == 27:
@@ -83,11 +84,8 @@ def main():
                     diff = 1
                 fps = str(round(1.0 / diff, 2))
 
-                #print("server recv from: ", clientInfo)
                 
                 (nums, img_file_size, img, img_itk, client_res, clientInfo_res) = getImage(client, clientInfo, s)
-
-                
 
                 client = client_res
                 clientInfo = clientInfo_res
@@ -99,13 +97,24 @@ def main():
                 cur_IMU_reading = request_IMU_data()
                 #update the agent
                 returned = agent.update(nums, cur_IMU_reading[0])
+
+                # codes = [agent.FLEXION_BOTTOM_ERROR_CODE, agent.FLEXION_TOP_ERROR_CODE, agent.TILT_DOWN_ERROR_CODE,
+                #         agent.TILT_UP_ERROR_CODE, agent.INSTABILITY_ERROR_CODE, agent.ROTATOIN_ERROR_CODE]
+                # for code in codes:
+                #     val = code.encode("utf-8")
+                #     client.send(val)
+                #     print(code,val)
+                # break
+
                 if returned is not None:
-                    print('\033[93m'+returned+'\033[93m')
+                    # ('\033[93m'+returned+'\033[93m')
+                    print(returned)
+                    val = returned.encode("utf-8")
+                    client.send(val)
 
 #                 print("time diff image: " + str(time.time() - time_before_agent))
 #                 print("Image Size: ", img_file_size)
                 if time.time() - prev_show > 0.05:
-#                     if data_queue[9] != None:
                     canvas.itemconfigure(img_ref, image=img_itk)
                 canvas.itemconfig(fps_ref, text="FPS: " + fps)
                 if enabled_playback:
@@ -184,7 +193,11 @@ def getImage(client, clientInfo, s):
             count += 1
             if(count > 5): raise ConnectionResetError
     except Exception as e:
-        print("Before recv2")
+        print("Waiting Connection")
+        agent.cleanup()
+        print(">>>")
+        agent.plot_segmentation()
+        print("!!!")
         res_client, res_clientInfo = s.accept()
         return ([], 0, None, None, res_client, res_clientInfo)
     size = struct.unpack('!i', buf)[0]
@@ -241,6 +254,4 @@ def request_IMU_data():
 
 if __name__ == "__main__":
     main()
-
-
 
