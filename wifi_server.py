@@ -21,7 +21,6 @@ import numpy as np
 from collections import deque
 from utils import Analyzer
 
-
 PORT = "/dev/cu.usbmodem14303"
 my_ser_port = ser.Serial(PORT, 115200)
 serial_cmd = "r"
@@ -30,17 +29,13 @@ encoded_cmd = serial_cmd.encode()
 #buffer for storing current IMU reading, size of 15: {cur-xl, cur-gr, cur-mg, cur-orient, cur-position}
 cur_IMU_reading = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-#queue for storing image/IMU-reading sequence
-data_queue = deque([None, None, None, None, None, None, None, None, None, None])
 image_folder = "images"
 enabled_playback = False
 agent = Analyzer()
 
-def main():
+def main(): # main function that runs continously
 
-    #global cur_IMU_reading
-
-    HOST = "192.168.1.76" # IP address of your Raspberry PI
+    HOST = "192.168.1.76" # IP address of the cloud server
     PORT = 6650            # Port to listen on (non-privileged ports are > 1023)
     img_count = 0
 
@@ -52,29 +47,27 @@ def main():
         ws,
         width = 480, 
         height = 640
-        )      
-    canvas.pack()
+        )       
+    canvas.pack() # Initialize GUI canvas
     
     img_ref = canvas.create_image(242, 320, anchor=CENTER)
     fps_ref = canvas.create_text(70, 50, text="FPS: 0.0", fill="black", font=('Helvetica 15 bold')) 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # set the socket addr to be able to be reused
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)         
         s.bind((HOST, PORT))
-        s.listen()
+        s.listen() # Waiting for connection
         
         print("listening on: " + str(PORT))
-        print("Before Accept")
         client, clientInfo = s.accept()
         client.settimeout(1)
-        print("After Accept")
+        print("Accepted Connection")
         prev = time.time()
         prev_show = time.time()
         timeout = time.time() + 100
         
         while (time.time() < timeout):
-            if cv2.waitKey(1) & 0xFF == 27:
+            if cv2.waitKey(1) & 0xFF == 27: # quit on keyboard interrupt
                 break
             try:
                 start_time = time.time() # start time of the loop
@@ -82,8 +75,7 @@ def main():
                 prev = start_time
                 if diff == 0:
                     diff = 1
-                fps = str(round(1.0 / diff, 2))
-
+                fps = str(round(1.0 / diff, 2)) # calculate FPS
                 
                 (nums, img_file_size, img, img_itk, client_res, clientInfo_res) = getImage(client, clientInfo, s)
 
@@ -96,64 +88,44 @@ def main():
                 #get the current IMU reading
                 cur_IMU_reading = request_IMU_data()
                 #update the agent
-                returned = agent.update(nums, cur_IMU_reading[0])
+                returned = agent.update(nums, cur_IMU_reading[0]) # send data to analyer
 
-                # codes = [agent.FLEXION_BOTTOM_ERROR_CODE, agent.FLEXION_TOP_ERROR_CODE, agent.TILT_DOWN_ERROR_CODE,
-                #         agent.TILT_UP_ERROR_CODE, agent.INSTABILITY_ERROR_CODE, agent.ROTATOIN_ERROR_CODE]
-                # for code in codes:
-                #     val = code.encode("utf-8")
-                #     client.send(val)
-                #     print(code,val)
-                # break
-
-                if returned is not None:
-                    # ('\033[93m'+returned+'\033[93m')
-                    print(returned)
-                    val = returned.encode("utf-8")
-                    client.send(val)
-
-#                 print("time diff image: " + str(time.time() - time_before_agent))
-#                 print("Image Size: ", img_file_size)
+                codes = [agent.FLEXION_BOTTOM_ERROR_CODE, agent.FLEXION_TOP_ERROR_CODE, agent.TILT_DOWN_ERROR_CODE,
+                        agent.TILT_UP_ERROR_CODE, agent.INSTABILITY_ERROR_CODE, agent.ROTATOIN_ERROR_CODE]
+                
+                for code in codes:
+                    if code == returned:
+                        val = code.encode("utf-8")
+                        client.send(val)
+                        print("Sent Status Code: ", code)
+                        break
+                # match error code and send status to phone
+                
                 if time.time() - prev_show > 0.05:
-                    canvas.itemconfigure(img_ref, image=img_itk)
+                    canvas.itemconfigure(img_ref, image=img_itk) # update canvas image in a constrained speed, since it is very resource consuming
                 canvas.itemconfig(fps_ref, text="FPS: " + fps)
                 if enabled_playback:
-                    img.save("./" + image_folder + "/" + str(time.time()) + ".png")
+                    img.save("./" + image_folder + "/" + str(time.time()) + ".png") # call playback function that converts frame images to video
                 ws.update()
                 img_count += 1
                 img.close()
-#                 print("Image count: ", img_count)
-
-                #get current IMU readings
                 
-                # time_before_IMU = time.time()
-
-                
-
-#                 print("time diff IMU: " + str(time.time() - time_before_IMU))
-
-                #update the queue
-                # data_queue.popleft()
-                # data_queue.append((img, cur_IMU_reading))
-            except:
-                pass
-
-            # print("Keyboard Interrupted")
-            #     if enabled_playback:
-            #         print("Post-processing Playback...")
-            #         images_to_video()
-            #     client.close()
-            #     s.close()
-            #     ws.destroy()
-            #     agent.cleanup()
-            #     agent.plot_segmentation()
-
-#             except Exception as e: 
-#                 print("Closing socket", e)
-#                 client.close()
-#                 s.close()
-#                 canvas.destroy()
-#                 break
+            except KeyboardInterrupt as e:
+                print("Keyboard Interrupted")
+                if enabled_playback:
+                    print("Post-processing Playback...")
+                    images_to_video() # post processing image frames to video
+                client.close()
+                s.close()
+                ws.destroy()
+                agent.cleanup()
+                agent.plot_segmentation() # upon manual interruption, plot currently gathered data
+            except Exception as e: 
+                print("Closing socket", e)
+                client.close()
+                s.close()
+                canvas.destroy()
+                break
 
         print("Timeout")
         if enabled_playback:
@@ -165,7 +137,7 @@ def main():
         agent.cleanup()
         agent.plot_segmentation()
 
-def images_to_video():
+def images_to_video(): # post processing function that converts image frames to video
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
@@ -173,7 +145,7 @@ def images_to_video():
     video = cv2.VideoWriter('plaback.avi', 0, 20, (width,height))
 
     for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
+        video.write(cv2.imread(os.path.join(image_folder, image))) # using opencv to convert images to video
 
     cv2.destroyAllWindows()
     video.release()
@@ -182,22 +154,19 @@ def images_to_video():
 
     for item in all_images:
         if item.endswith(".png"):
-            os.remove(os.path.join(dir_name, item))
+            os.remove(os.path.join(dir_name, item)) # remove all images afterwards
 
-def getImage(client, clientInfo, s):
+def getImage(client, clientInfo, s): # function to request image from phone once
     buf = b''
     try:
         count = 0
         while len(buf) < 4:
             buf += client.recv(4-len(buf))
-            count += 1
+            count += 1  # receive image size first in order to determine image buffer size
             if(count > 5): raise ConnectionResetError
     except Exception as e:
-        print("Waiting Connection")
         agent.cleanup()
-        print(">>>")
         agent.plot_segmentation()
-        print("!!!")
         res_client, res_clientInfo = s.accept()
         return ([], 0, None, None, res_client, res_clientInfo)
     size = struct.unpack('!i', buf)[0]
@@ -205,30 +174,28 @@ def getImage(client, clientInfo, s):
     temp = time.time()
     num = RecvN(client, size)
     image = PIL.Image.open(io.BytesIO(num)).convert('RGBA').rotate(270, fillcolor = 0)
-    ndarr = np.rot90(cv2.imdecode(np.frombuffer(num, np.uint8), -1))
+    ndarr = np.rot90(cv2.imdecode(np.frombuffer(num, np.uint8), -1)) # flip the image as it was send in row major bytes
     img_itk = itk.PhotoImage(image)
     return (ndarr, size, image, img_itk, client, clientInfo)
 
-def RecvN(socket, n):
+def RecvN(socket, n): # helper function that continuously perform socket receive
     totalContent = b''
     totalRecved = 0
     while totalRecved < n:
         onceContent = socket.recv(n - totalRecved)
         totalContent += onceContent
         totalRecved = len(totalContent)
- 
     return totalContent
 
 
-def request_IMU_data():
+def request_IMU_data(): 
 
     global cur_IMU_reading
     
     prev_time = time.time()
 
     my_ser_port.write(encoded_cmd)
-    # my_ser_port.write(encoded_cmd)
-    # serial_obj_0 = my_ser_port.readline()
+
     serial_obj_1 = my_ser_port.readline()
     # Poll the serial port
     line = str(serial_obj_1, 'utf-8').replace("\r\n", "").split("' ")
@@ -243,15 +210,10 @@ def request_IMU_data():
 
     to_return = [float(element) for element in line]
     
-
     time_diff = time.time() - prev_time
-
-    # print(to_return)
-    # print(time_diff)
     return to_return, (time_diff * 1000)
 
 
 
 if __name__ == "__main__":
     main()
-

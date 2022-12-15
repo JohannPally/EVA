@@ -52,8 +52,9 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
+ * Helper class to initialize live camera display on app.
+ * Reference: https://github.com/miyosuda/TensorFlowAndroidDemo
  * Camera Connection Fragment that captures images from camera.
- *
  * <p>Instantiated by newInstance.</p>
  */
 @SuppressLint("ValidFragment")
