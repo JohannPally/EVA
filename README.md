@@ -53,6 +53,8 @@ The threshold for top and bottom are horizontal lines. The y axes is constrained
 
 # Server
 
+# Android Application
+
 # Hardware
 
 ## WB55RG-examples-with-hal-lib
