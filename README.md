@@ -53,6 +53,8 @@ The threshold for top and bottom are horizontal lines. The y axes is constrained
 
 # Server
 
+The server is an program that runs continuously receiving image transmission from the Android phone. The server itself only have the server IP address and port number as the required configurations. In order to start the server, run "python3 wifi_server.py", and the console should display statments regarding the current status of the application. The server processes images from Android app in a request and response manner. Once the image is gathered, it then combines the image with the IMU data and call up the analyzer for skeletionization. The server is a central point of communication between different components. Lastly, the server contains functionalaity to convert the gathered image frames to a video, which serves as another way of post workout feedback
+
 # Android Application
 
 The EVA/main folder contains all the necessary files to run the EVA android application on an Android phone with version 6.0 or above
