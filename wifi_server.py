@@ -95,7 +95,7 @@ def main(): # main function that runs continously
                 
                 for code in codes:
                     if code == returned:
-                        val = code.encode("utf-8")
+                        val = str(code).encode("utf-8")
                         client.send(val)
                         print("Sent Status Code: ", code)
                         break
